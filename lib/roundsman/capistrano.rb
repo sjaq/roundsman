@@ -172,7 +172,7 @@ require 'tempfile'
 
     namespace :chef do
 
-      set_default :chef_version, "~> 0.10.8"
+      set_default :chef_version, "~> 10.18"
       set_default :cookbooks_directory, ["config/cookbooks"]
       set_default :roles_directory, ["config/roles"]
       set_default :data_bags_directory, ["config/data_bags"]
