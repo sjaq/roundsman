@@ -310,7 +310,7 @@ require 'tempfile'
         begin
           tar_file.close
           env_vars = fetch(:copyfile_disable) && RUBY_PLATFORM.downcase.include?('darwin') ? "COPYFILE_DISABLE=true" : ""
-          system "#{env_vars} tar -cjf #{tar_file.path} #{data_bag_pags.join(' ')}"
+          system "#{env_vars} tar -cjf #{tar_file.path} #{data_bag_paths.join(' ')}"
           upload tar_file.path, roundsman_working_dir("data_bags.tar"), :via => :scp
           run "cd #{roundsman_working_dir} && tar -xjf data_bags.tar"
         ensure
