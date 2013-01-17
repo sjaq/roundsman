@@ -192,8 +192,8 @@ require 'tempfile'
         generate_config
         generate_attributes
         copy_cookbooks
-        copy_data_bags
-        copy_roles
+        copy_data_bags unless data_bag_paths.empty?
+        copy_roles unless role_paths.empty?
       end
 
       desc "Installs chef"
