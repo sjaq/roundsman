@@ -219,11 +219,11 @@ require 'tempfile'
       end
 
       def role_paths
-        Array(fetch(:cookbooks_directory)).select { |path| File.exist?(path) }
+        Array(fetch(:roles_directory)).select { |path| File.exist?(path) }
       end
 
       def data_bag_paths
-        Array(fetch(:cookbooks_directory)).select { |path| File.exist?(path) }
+        Array(fetch(:data_bags_directory)).select { |path| File.exist?(path) }
       end
 
       def install_chef?
