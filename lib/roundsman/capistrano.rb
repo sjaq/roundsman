@@ -174,6 +174,8 @@ require 'tempfile'
 
       set_default :chef_version, "~> 0.10.8"
       set_default :cookbooks_directory, ["config/cookbooks"]
+      set_default :roles_directory, ["config/roles"]
+      set_default :data_bags_directory, ["config/data_bags"]
       set_default :copyfile_disable, false
       set_default :filter_sensitive_settings, [ /password/, /filter_sensitive_settings/ ]
 
@@ -190,6 +192,8 @@ require 'tempfile'
         generate_config
         generate_attributes
         copy_cookbooks
+        copy_data_bags
+        copy_roles
       end
 
       desc "Installs chef"
@@ -214,6 +218,14 @@ require 'tempfile'
         Array(fetch(:cookbooks_directory)).select { |path| File.exist?(path) }
       end
 
+      def role_paths
+        Array(fetch(:cookbooks_directory)).select { |path| File.exist?(path) }
+      end
+
+      def data_bag_paths
+        Array(fetch(:cookbooks_directory)).select { |path| File.exist?(path) }
+      end
+
       def install_chef?
         required_version = fetch(:chef_version).inspect
         output = capture("gem list -i -v #{required_version} || true").strip
@@ -222,10 +234,14 @@ require 'tempfile'
 
       def generate_config
         cookbook_string = cookbooks_paths.map { |c| "File.join(root, #{c.to_s.inspect})" }.join(', ')
+        role_string = role_paths.map { |c| "File.join(root, #{c.to_s.inspect})" }.join(', ')
+        data_bag_string = data_bag_paths.map { |c| "File.join(root, #{c.to_s.inspect})" }.join(', ')
         solo_rb = <<-RUBY
           root = File.expand_path(File.dirname(__FILE__))
           file_cache_path File.join(root, "cache")
           cookbook_path [ #{cookbook_string} ]
+          role_path [ #{role_string} ]
+          data_bag_path [ #{data_bag_string} ]
         RUBY
         put solo_rb, roundsman_working_dir("solo.rb"), :via => :scp
       end
@@ -275,6 +291,33 @@ require 'tempfile'
           tar_file.unlink
         end
       end
+
+      def copy_roles
+        tar_file = Tempfile.new("roles.tar")
+        begin
+          tar_file.close
+          env_vars = fetch(:copyfile_disable) && RUBY_PLATFORM.downcase.include?('darwin') ? "COPYFILE_DISABLE=true" : ""
+          system "#{env_vars} tar -cjf #{tar_file.path} #{role_paths.join(' ')}"
+          upload tar_file.path, roundsman_working_dir("roles.tar"), :via => :scp
+          run "cd #{roundsman_working_dir} && tar -xjf roles.tar"
+        ensure
+          tar_file.unlink
+        end
+      end
+
+      def copy_data_bags
+        tar_file = Tempfile.new("data_bags.tar")
+        begin
+          tar_file.close
+          env_vars = fetch(:copyfile_disable) && RUBY_PLATFORM.downcase.include?('darwin') ? "COPYFILE_DISABLE=true" : ""
+          system "#{env_vars} tar -cjf #{tar_file.path} #{data_bag_pags.join(' ')}"
+          upload tar_file.path, roundsman_working_dir("data_bags.tar"), :via => :scp
+          run "cd #{roundsman_working_dir} && tar -xjf data_bags.tar"
+        ensure
+          tar_file.unlink
+        end
+      end
+
 
     end
 
